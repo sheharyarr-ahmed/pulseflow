@@ -1,0 +1,22 @@
+# secrets
+.env
+dashboard/.env*
+!.env.example
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# node / next
+node_modules/
+.next/
+.vercel
+
+# claude local layers
+.claude/settings.local.json
+.claude/CLAUDE.local.md
+
+# os
+.DS_Store

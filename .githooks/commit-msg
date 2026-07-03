@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Reject attribution strings in commit messages (SPEC.md Decision 11).
+# Single-author history: Sheharyar Ahmed. No tool trailers, ever.
+if grep -qiE 'claude|co-authored-by|generated with|anthropic' "$1"; then
+  echo "commit-msg: banned attribution string in commit message (see SPEC.md Decision 11)" >&2
+  exit 1
+fi
