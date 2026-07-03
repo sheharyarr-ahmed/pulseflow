@@ -16,4 +16,4 @@ Spec: SPEC.md is authoritative; this file is the working summary.
 
 **Phase 0 tree-gate interpretation:** every SPEC.md-listed path exists; create-next-app extras and tests/fixtures/ are allowed additions.
 
-Feed status: (placeholder — Phase 1 overwrites with live Freelancer/Upwork validation evidence)
+Feed status (validated live 2026-07-04): Freelancer keyword RSS alive — `rss.xml?keyword=react` → 200 `text/xml`, 20 items, stable `<guid isPermaLink="false">Freelancer_project_NNNN</guid>`. Upwork RSS dead — `/ab/feed/jobs/rss` → 410, `/nx/search/jobs/rss` → 403 (Cloudflare).

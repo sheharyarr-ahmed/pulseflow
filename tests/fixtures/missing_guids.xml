@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Freelancer.com jobs</title>
+    <link>https://www.freelancer.com</link>
+    <description>synthetic fixture: items with missing GUIDs</description>
+    <item>
+      <title>Job with guid and link</title>
+      <link>https://www.freelancer.com/projects/1</link>
+      <guid isPermaLink="false">Freelancer_project_1</guid>
+      <description>&lt;p&gt;Build a &lt;b&gt;React&lt;/b&gt; dashboard&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Job missing guid, has link</title>
+      <link>https://www.freelancer.com/projects/2</link>
+      <description>URL fallback expected</description>
+    </item>
+    <item>
+      <title>Job missing guid and link</title>
+      <description>must be skipped and logged</description>
+    </item>
+    <item>
+      <link>https://www.freelancer.com/projects/4</link>
+      <guid isPermaLink="false">Freelancer_project_4</guid>
+      <description>missing title: must be skipped and logged</description>
+    </item>
+  </channel>
+</rss>
