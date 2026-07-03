@@ -1,0 +1,12 @@
+{
+  "feed_urls": [
+    "https://www.freelancer.com/rss.xml?keyword=react",
+    "https://www.freelancer.com/rss.xml?keyword=python",
+    "https://www.freelancer.com/rss.xml?keyword=mobile%20app",
+    "https://www.freelancer.com/rss.xml?keyword=ai"
+  ],
+  "keywords": ["AI agent", "Next.js", "MVP", "SaaS", "iOS", "agentic", "RAG", "LangGraph"],
+  "min_score": 7,
+  "heartbeat": true,
+  "max_jobs_scored_per_run": 50
+}
