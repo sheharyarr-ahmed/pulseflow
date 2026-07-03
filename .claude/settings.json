@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(uv:*)",
+      "Bash(python:*)",
+      "Bash(pnpm build:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./dashboard/.env*)"
+    ]
+  }
+}
