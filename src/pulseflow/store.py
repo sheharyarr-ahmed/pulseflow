@@ -17,7 +17,7 @@ Decision 19), only the exception type name kept, length capped.
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from pulseflow.models import Job, JobStatus, ScoreResult, StageError, WorkflowRun
 
@@ -107,6 +107,40 @@ class Store:
         self._client.table("jobs").update(
             {"score_attempts": current_attempts + made}
         ).eq("id", job_id).execute()
+
+    # --- notification pool + compare-and-swap flip --------------------------
+
+    def fetch_notification_pool(self, min_score: int, top_n: int, hours: int = 24) -> list[dict]:
+        """SCORED rows worth posting: DB-wide so crashed-run leftovers self-heal,
+        24h-bounded because a stale gig is worthless (Decision 15). Order:
+        score DESC, fetched_at DESC; take up to top_n."""
+        cutoff = (_now() - timedelta(hours=hours)).isoformat()
+        res = (
+            self._client.table("jobs")
+            .select("id, guid, title, url, score, reasoning, fetched_at")
+            .eq("status", JobStatus.SCORED.value)
+            .gte("score", min_score)
+            .gte("scored_at", cutoff)
+            .order("score", desc=True)
+            .order("fetched_at", desc=True)
+            .limit(top_n)
+            .execute()
+        )
+        return res.data or []
+
+    def flip_to_notified(self, ids: list[str]) -> int:
+        """Compare-and-swap: flip only rows still SCORED (Decision 4/P3). Returns
+        the count actually flipped — the caller warns if it differs from posted."""
+        if not ids:
+            return 0
+        res = (
+            self._client.table("jobs")
+            .update({"status": JobStatus.NOTIFIED.value, "notified_at": _now().isoformat()})
+            .in_("id", ids)
+            .eq("status", JobStatus.SCORED.value)
+            .execute()
+        )
+        return len(res.data or [])
 
     # --- workflow_runs ------------------------------------------------------
 

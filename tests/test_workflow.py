@@ -186,6 +186,44 @@ def test_score_update_db_failure_is_infra():
     assert result.exit_code == 1
 
 
+def test_notify_receives_run_counts():
+    store = FakeStore(candidates=[])
+    seen = {}
+
+    def fake_notify(s, counts):
+        seen.update(counts)
+        return 2
+
+    result = run_pipeline(
+        config=cfg(),
+        source=FakeSource([job("g1"), job("g2", title="wordpress")]),
+        store=store,
+        dedupe=identity_dedupe,
+        score=scorer_returning(),
+        notify=fake_notify,
+        feed_count=1,
+    )
+    assert result.jobs_notified == 2
+    assert seen == {"fetched": 2, "matched": 1, "new": 1, "scored": 0}  # scored 0: no NEW candidates
+
+
+def test_notify_failure_is_recorded_not_fatal():
+    def boom(s, counts):
+        raise RuntimeError("slack down https://hooks.slack.com/secret")
+
+    result = run_pipeline(
+        config=cfg(),
+        source=FakeSource([]),
+        store=FakeStore(candidates=[]),
+        dedupe=identity_dedupe,
+        score=scorer_returning(),
+        notify=boom,
+        feed_count=1,
+    )
+    assert any(e.stage == "notify" for e in result.errors)
+    assert all("hooks.slack.com" not in e.message for e in result.errors)  # sanitized
+
+
 def test_cap_limits_candidates_scored():
     rows = [{"id": f"id-{i}", "guid": f"g{i}", "title": "t", "description": "d", "fetched_at": NOW.isoformat(), "score_attempts": 0} for i in range(5)]
     store = FakeStore(candidates=rows)

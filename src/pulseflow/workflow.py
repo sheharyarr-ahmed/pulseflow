@@ -63,7 +63,7 @@ def run_pipeline(
     store: Store,
     dedupe: Callable[[list[Job]], list[Job]],
     score: Callable[[Job], ScoreOutcome],
-    notify: Callable[[Store], int] | None = None,
+    notify: Callable[[Store, dict], int] | None = None,
     feed_count: int,
 ) -> RunResult:
     result = RunResult()
@@ -114,7 +114,13 @@ def run_pipeline(
     # --- notify (Phase 3 wires the real Slack notifier; heartbeat on quiet days) ---
     if notify is not None:
         try:
-            result.jobs_notified = notify(store)
+            counts = {
+                "fetched": result.jobs_fetched,
+                "matched": result.jobs_filtered,
+                "new": result.jobs_new,
+                "scored": result.jobs_scored,
+            }
+            result.jobs_notified = notify(store, counts)
         except Exception as exc:  # noqa: BLE001 — Slack/CAS failure recorded, see Decision 7
             result.errors.append(make_stage_error("notify", exc))
             logger.error("notify stage failed", extra={"kind": type(exc).__name__})

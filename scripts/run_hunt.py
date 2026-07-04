@@ -16,7 +16,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from pulseflow.config import (
-    PERSIST_ENV_VARS,
+    FULL_RUN_ENV_VARS,
     MissingEnvError,
     load_env_config,
     load_keywords_config,
@@ -25,6 +25,7 @@ from pulseflow.dedupe import remove_seen
 from pulseflow.fetcher import FreelancerRSS
 from pulseflow.filters import filter_jobs
 from pulseflow.logging_setup import setup_logging
+from pulseflow.notifier import notify as slack_notify
 from pulseflow.scorer import load_scoring_prompt, score_job
 from pulseflow.store import Store
 from pulseflow.workflow import run_pipeline
@@ -71,14 +72,12 @@ def run_full() -> int:
     from supabase import create_client
 
     keywords_cfg = load_keywords_config()
-    # Phase 2: the pipeline persists and scores; the Slack notifier lands Phase 3,
-    # so the run needs Supabase but not the webhook URL yet.
-    env = load_env_config(dry_run=False, required=PERSIST_ENV_VARS)
+    env = load_env_config(dry_run=False, required=FULL_RUN_ENV_VARS)
 
     client = create_client(env.supabase_url, env.supabase_secret_key)
     store = Store(client)
     source = FreelancerRSS([str(u) for u in keywords_cfg.feed_urls])
-    anthropic_client = anthropic.Anthropic(api_key=env.anthropic_api_key)
+    anthropic_client = anthropic.Anthropic(api_key=env.anthropic_api_key, timeout=60.0)
     prompt = load_scoring_prompt()
 
     result = run_pipeline(
@@ -87,7 +86,13 @@ def run_full() -> int:
         store=store,
         dedupe=lambda jobs: remove_seen(client, jobs),
         score=lambda job: score_job(anthropic_client, job, prompt, model=env.model),
-        notify=None,  # Phase 3 wires the Slack notifier
+        notify=lambda s, counts: slack_notify(
+            s,
+            counts,
+            webhook_url=env.slack_webhook_url,
+            min_score=keywords_cfg.min_score,
+            heartbeat=keywords_cfg.heartbeat,
+        ),
         feed_count=len(keywords_cfg.feed_urls),
     )
     print(

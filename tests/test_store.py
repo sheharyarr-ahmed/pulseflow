@@ -50,7 +50,8 @@ def _chain_mock(return_data):
     execute.execute.return_value = MagicMock(data=return_data)
     # every intermediate builder call returns the same object so chaining works
     client.table.return_value = execute
-    for attr in ("insert", "upsert", "update", "select", "eq", "lt", "order", "limit", "in_"):
+    for attr in ("insert", "upsert", "update", "select", "eq", "lt", "gte",
+                 "order", "limit", "in_", "neq", "delete"):
         getattr(execute, attr).return_value = execute
     return client, execute
 
@@ -111,3 +112,29 @@ def test_mark_scored_and_bump_attempts_call_shapes():
 
     store.bump_score_attempts("id-2", current_attempts=2, made=2)
     assert execute.update.call_args.args[0] == {"score_attempts": 4}
+
+
+def test_fetch_notification_pool_query_shape():
+    client, execute = _chain_mock([{"id": "id-1"}])
+    Store(client).fetch_notification_pool(min_score=7, top_n=3)
+    execute.eq.assert_any_call("status", "SCORED")
+    execute.gte.assert_any_call("score", 7)
+    # a scored_at cutoff is applied (24h staleness) and results are limited to top_n
+    assert any(c.args[0] == "scored_at" for c in execute.gte.call_args_list)
+    execute.limit.assert_called_with(3)
+
+
+def test_flip_to_notified_is_compare_and_swap():
+    client, execute = _chain_mock([{"id": "id-1"}, {"id": "id-2"}])
+    flipped = Store(client).flip_to_notified(["id-1", "id-2"])
+    assert flipped == 2
+    payload = execute.update.call_args.args[0]
+    assert payload["status"] == "NOTIFIED" and "notified_at" in payload
+    execute.eq.assert_any_call("status", "SCORED")  # the CAS guard
+    execute.in_.assert_called_once_with("id", ["id-1", "id-2"])
+
+
+def test_flip_to_notified_empty_is_noop():
+    client = MagicMock()
+    assert Store(client).flip_to_notified([]) == 0
+    client.table.assert_not_called()
