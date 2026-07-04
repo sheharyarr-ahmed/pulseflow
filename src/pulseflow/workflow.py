@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from pulseflow.config import KeywordsConfig
 from pulseflow.filters import filter_jobs
 from pulseflow.models import Job, StageError, WorkflowRun
+from pulseflow.notifier import SlackPostError
 from pulseflow.scorer import ScoreOutcome
 from pulseflow.store import Store, make_stage_error
 
@@ -31,7 +32,9 @@ logger = logging.getLogger(__name__)
 # excluded (LLM failure degrades) and finalize is excluded (best-effort). Fetch
 # is handled separately: a single broken feed continues, only ALL feeds dead
 # exits red (Decision 18) — so a fetch StageError alone does NOT fail the run.
-_INFRA_STAGES = frozenset({"persist", "score_query", "score_update"})
+# "notify_db" covers the Supabase read/write inside the notify path (pool SELECT,
+# CAS flip); a pure Slack-post failure is stage "notify" and stays green.
+_INFRA_STAGES = frozenset({"persist", "score_query", "score_update", "notify_db"})
 
 
 @dataclass
@@ -113,17 +116,22 @@ def run_pipeline(
 
     # --- notify (Phase 3 wires the real Slack notifier; heartbeat on quiet days) ---
     if notify is not None:
+        counts = {
+            "fetched": result.jobs_fetched,
+            "matched": result.jobs_filtered,
+            "new": result.jobs_new,
+            "scored": result.jobs_scored,
+        }
         try:
-            counts = {
-                "fetched": result.jobs_fetched,
-                "matched": result.jobs_filtered,
-                "new": result.jobs_new,
-                "scored": result.jobs_scored,
-            }
             result.jobs_notified = notify(store, counts)
-        except Exception as exc:  # noqa: BLE001 — Slack/CAS failure recorded, see Decision 7
+        except SlackPostError as exc:
+            # Slack outage self-heals: rows stay SCORED and re-post next run. Green.
             result.errors.append(make_stage_error("notify", exc))
-            logger.error("notify stage failed", extra={"kind": type(exc).__name__})
+            logger.error("slack post failed", extra={"kind": type(exc).__name__})
+        except Exception as exc:  # noqa: BLE001 — Supabase pool SELECT / CAS flip failure
+            # Broken DB plumbing in the notify path must show a red run (Decision 7).
+            result.errors.append(make_stage_error("notify_db", exc))
+            logger.error("notify db failure", extra={"kind": type(exc).__name__})
 
     # --- finalize + exit code ----------------------------------------------
     store.finalize_run(

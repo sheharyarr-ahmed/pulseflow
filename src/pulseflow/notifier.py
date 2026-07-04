@@ -22,6 +22,12 @@ TOP_N = 3
 REASONING_TRUNCATE = 140
 
 
+class SlackPostError(RuntimeError):
+    """A Slack webhook post failed. Degradable, not infra: the posted rows stay
+    SCORED (no flip) and re-post next run within the 24h window, so this must NOT
+    fail the run red — only fetch/Supabase failures do (SPEC.md Decision 7)."""
+
+
 def escape_mrkdwn(text: str) -> str:
     """Slack requires &, <, > escaped in message text (link syntax uses < >)."""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -78,14 +84,14 @@ def notify(
         if heartbeat:
             status = post_to_slack(webhook_url, heartbeat_text(counts), client)
             if status != 200:
-                raise RuntimeError(f"slack heartbeat failed status={status}")
+                raise SlackPostError(f"slack heartbeat failed status={status}")
             logger.info("heartbeat posted")
         return 0
 
     status = post_to_slack(webhook_url, build_message(rows), client)
     if status != 200:
         # Do not flip on a failed post — the rows stay SCORED and retry next run.
-        raise RuntimeError(f"slack webhook failed status={status}")
+        raise SlackPostError(f"slack webhook failed status={status}")
 
     flipped = store.flip_to_notified([r["id"] for r in rows])
     if flipped != len(rows):

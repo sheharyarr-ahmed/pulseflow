@@ -207,9 +207,11 @@ def test_notify_receives_run_counts():
     assert seen == {"fetched": 2, "matched": 1, "new": 1, "scored": 0}  # scored 0: no NEW candidates
 
 
-def test_notify_failure_is_recorded_not_fatal():
-    def boom(s, counts):
-        raise RuntimeError("slack down https://hooks.slack.com/secret")
+def test_slack_post_failure_degrades_stays_green():
+    from pulseflow.notifier import SlackPostError
+
+    def slack_down(s, counts):
+        raise SlackPostError("slack webhook failed status=500 https://hooks.slack.com/secret")
 
     result = run_pipeline(
         config=cfg(),
@@ -217,11 +219,30 @@ def test_notify_failure_is_recorded_not_fatal():
         store=FakeStore(candidates=[]),
         dedupe=identity_dedupe,
         score=scorer_returning(),
-        notify=boom,
+        notify=slack_down,
         feed_count=1,
     )
     assert any(e.stage == "notify" for e in result.errors)
+    assert result.exit_code == 0  # Slack outage self-heals; not red
     assert all("hooks.slack.com" not in e.message for e in result.errors)  # sanitized
+
+
+def test_supabase_failure_in_notify_path_exits_red():
+    # A Supabase pool SELECT / CAS flip failure raises a non-Slack error -> infra.
+    def db_down(s, counts):
+        raise RuntimeError("postgrest connection reset")
+
+    result = run_pipeline(
+        config=cfg(),
+        source=FakeSource([]),
+        store=FakeStore(candidates=[]),
+        dedupe=identity_dedupe,
+        score=scorer_returning(),
+        notify=db_down,
+        feed_count=1,
+    )
+    assert any(e.stage == "notify_db" for e in result.errors)
+    assert result.exit_code == 1  # broken DB plumbing must show red (Decision 7)
 
 
 def test_cap_limits_candidates_scored():
