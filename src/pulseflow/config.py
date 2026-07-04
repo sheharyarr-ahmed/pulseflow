@@ -16,12 +16,14 @@ DEFAULT_MODEL = "claude-haiku-4-5"
 MODEL_ENV_VAR = "PULSEFLOW_MODEL"
 
 DRY_RUN_ENV_VARS: tuple[str, ...] = ("ANTHROPIC_API_KEY",)
-FULL_RUN_ENV_VARS: tuple[str, ...] = (
+# Persistence stages (Phase 2) — Supabase but no Slack yet.
+PERSIST_ENV_VARS: tuple[str, ...] = (
     "ANTHROPIC_API_KEY",
     "SUPABASE_URL",
     "SUPABASE_SECRET_KEY",
-    "SLACK_WEBHOOK_URL",
 )
+# Full production run (Phase 3+) — adds the Slack notifier.
+FULL_RUN_ENV_VARS: tuple[str, ...] = (*PERSIST_ENV_VARS, "SLACK_WEBHOOK_URL")
 
 
 class MissingEnvError(RuntimeError):
@@ -46,10 +48,18 @@ class EnvConfig(BaseModel):
 
 
 def load_env_config(
-    *, dry_run: bool, environ: Mapping[str, str] = os.environ
+    *,
+    dry_run: bool,
+    required: tuple[str, ...] | None = None,
+    environ: Mapping[str, str] = os.environ,
 ) -> EnvConfig:
-    """Fail fast when a mode's required variables are absent or empty."""
-    required = DRY_RUN_ENV_VARS if dry_run else FULL_RUN_ENV_VARS
+    """Fail fast when the required variables are absent or empty.
+
+    `required` overrides the mode default — a phase asks for exactly the vars its
+    pipeline uses (e.g. Supabase without Slack before the notifier is wired).
+    """
+    if required is None:
+        required = DRY_RUN_ENV_VARS if dry_run else FULL_RUN_ENV_VARS
     missing = [name for name in required if not environ.get(name)]
     if missing:
         raise MissingEnvError(missing)
