@@ -23,10 +23,12 @@ export function snippet(text: string | null, max = 300): string {
   return collapsed.length <= max ? collapsed : collapsed.slice(0, max - 1) + "…";
 }
 
-// Score → tint. Neutral, works in light and dark.
+// Score → tinted ring chip. Text colors use the contrast-safe pair per theme
+// (darker emerald/amber on light, lighter on dark).
 export function scoreTone(score: number | null): string {
-  if (score == null) return "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200";
-  if (score >= 7) return "bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100";
-  if (score >= 5) return "bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-100";
-  return "bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200";
+  if (score != null && score >= 7)
+    return "bg-emerald-500/10 text-emerald-600 ring-1 ring-inset ring-emerald-500/25 dark:text-emerald-400 dark:ring-emerald-400/25";
+  if (score != null && score >= 5)
+    return "bg-amber-500/10 text-amber-600 ring-1 ring-inset ring-amber-500/25 dark:text-amber-400 dark:ring-amber-400/25";
+  return "bg-zinc-500/10 text-zinc-600 ring-1 ring-inset ring-zinc-500/25 dark:text-zinc-400 dark:ring-zinc-400/25";
 }

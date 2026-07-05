@@ -1,11 +1,8 @@
 import Link from "next/link";
-import { getClient } from "@/lib/supabase";
+import { getClient, HEARTBEAT_FRESH_MS } from "@/lib/supabase";
 import { pkt } from "@/lib/format";
 import NavLink from "./NavLink";
 import ThemeToggle from "./ThemeToggle";
-
-// The pipeline runs daily; a heartbeat older than this is a missed run.
-const FRESH_MS = 26 * 60 * 60 * 1000;
 
 async function lastHeartbeat(): Promise<string | null> {
   const supabase = getClient();
@@ -24,7 +21,7 @@ function StatusDot({ startedAt }: { startedAt: string | null }) {
   // Real status, not decoration: emerald + breathing while the daily run is
   // fresh, amber once it's overdue, zinc when the data source is unreachable.
   const fresh =
-    startedAt !== null && Date.now() - Date.parse(startedAt) < FRESH_MS;
+    startedAt !== null && Date.now() - Date.parse(startedAt) < HEARTBEAT_FRESH_MS;
   const dot = !startedAt
     ? "bg-zinc-400 dark:bg-zinc-600"
     : fresh

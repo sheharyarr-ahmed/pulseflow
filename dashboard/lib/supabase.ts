@@ -46,6 +46,10 @@ export function getClient() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
+// The pipeline runs daily; a newest run older than this means a missed run.
+// Shared by the nav status dot and the home hero's EKG state.
+export const HEARTBEAT_FRESH_MS = 26 * 60 * 60 * 1000;
+
 // A job that scored but was never picked up again is "gave up" once it hits the
 // lifetime attempts cap (SPEC.md: derived, not a stored status).
 export const GAVE_UP_ATTEMPTS = 6;
