@@ -3,7 +3,6 @@ import Reveal from "./Reveal";
 const TONES = {
   default: "",
   pulse: "text-pulse-text",
-  alert: "text-red-600 dark:text-red-400",
 };
 
 export default function StatCard({

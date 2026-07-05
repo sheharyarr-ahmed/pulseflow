@@ -65,8 +65,6 @@ export default async function Home() {
   const avgDuration = durations.length
     ? `${(durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(1)}s`
     : "—";
-  const errorRuns = runs.filter((r) => (r.errors?.length ?? 0) > 0).length;
-
   const latest = runs[0]?.started_at ?? null;
   const fresh =
     // eslint-disable-next-line react-hooks/purity -- server component under 5-min ISR: freshness re-evaluates per revalidation by design
@@ -117,19 +115,14 @@ export default async function Home() {
       <section className="mx-auto max-w-6xl px-6 pb-14 md:px-10 md:pb-20">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard label="Runs tracked" value={String(runs.length)} />
+          <StatCard label="Jobs screened" value={String(funnel[0].value)} delay={75} />
           <StatCard
             label="Jobs notified"
             value={String(funnel[4].value)}
             tone="pulse"
-            delay={75}
+            delay={150}
           />
-          <StatCard label="Avg run duration" value={avgDuration} delay={150} />
-          <StatCard
-            label="Error runs"
-            value={String(errorRuns)}
-            tone={errorRuns > 0 ? "alert" : "default"}
-            delay={225}
-          />
+          <StatCard label="Avg run duration" value={avgDuration} delay={225} />
         </div>
       </section>
 
