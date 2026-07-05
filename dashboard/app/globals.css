@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
+/* Dark mode is class-driven (user toggle + system fallback), not media-driven. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  color-scheme: light;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --surface: #fafafa;
+  --edge: #e4e4e7;
+  --muted: #71717a;
+  --pulse-text: #059669;
+  --pulse-dim: rgb(16 185 129 / 0.1);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --surface: #131316;
+  --edge: #27272a;
+  --muted: #a1a1aa;
+  --pulse-text: #34d399;
+  --pulse-dim: rgb(16 185 129 / 0.16);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-edge: var(--edge);
+  --color-muted: var(--muted);
+  --color-pulse: #10b981;
+  --color-pulse-text: var(--pulse-text);
+  --color-pulse-dim: var(--pulse-dim);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: rgb(16 185 129 / 0.25);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pulse);
+  outline-offset: 2px;
+}
+
+/* Ambient emerald glow — hero and footer only, never behind data. */
+.hero-glow {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% -10%,
+    rgb(16 185 129 / 0.07),
+    transparent 70%
+  );
+}
+.dark .hero-glow {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% -10%,
+    rgb(16 185 129 / 0.13),
+    transparent 70%
+  );
+}
+.footer-glow {
+  background: radial-gradient(
+    ellipse 70% 80% at 50% 120%,
+    rgb(16 185 129 / 0.05),
+    transparent 70%
+  );
+}
+.dark .footer-glow {
+  background: radial-gradient(
+    ellipse 70% 80% at 50% 120%,
+    rgb(16 185 129 / 0.1),
+    transparent 70%
+  );
 }
