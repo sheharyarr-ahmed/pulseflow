@@ -53,6 +53,114 @@ body {
   outline-offset: 2px;
 }
 
+/* --- Motion system ------------------------------------------------------
+   Reveal.tsx stamps data-shown; everything else is CSS. The hidden initial
+   state only applies when JS is provably present (html.js, set before paint)
+   AND the visitor allows motion — so no-JS, reduced-motion, and pre-paint
+   renders always show content. */
+
+@media (prefers-reduced-motion: no-preference) {
+  html.js [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  html.js [data-reveal][data-shown] {
+    opacity: 1;
+    transform: none;
+  }
+  /* Safety net: if hydration never happens (JS error, slow network), force
+     content visible after 3s. Animations override transitioned properties. */
+  html.js [data-reveal]:not([data-shown]) {
+    animation: reveal-timeout 0s 3s forwards;
+  }
+
+  /* Funnel bars grow inside a revealed parent; labels sit outside the
+     scaling layer so they never stretch. */
+  html.js [data-reveal] .funnel-fill {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: var(--fill-delay, 0ms);
+  }
+  html.js [data-reveal][data-shown] .funnel-fill {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes reveal-timeout {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The EKG line draws itself, then the dot ignites and breathes forever. */
+.ekg-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ekg-draw 1.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.ekg-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dot-ignite 0.35s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both;
+}
+
+.ekg-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: halo-breathe 2.4s ease-out 1.8s infinite;
+}
+
+@keyframes ekg-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dot-ignite {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes halo-breathe {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  70%,
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: jump every animation to its final frame. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* The breathing heartbeat dot — nav status, newest run row. */
 .dot-live {
   animation: dot-breathe 2.4s ease-out infinite;
