@@ -1,3 +1,10 @@
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="dashboard/public/brand/app-icon-1024-dark.png" />
+    <img src="dashboard/public/brand/app-icon-1024-light.png" alt="PulseFlow" width="120" height="120" />
+  </picture>
+</div>
+
 # PulseFlow
 
 Code-first workflow orchestration that replaces one Zapier-class workflow: a daily freelance-market job hunt. A GitHub Actions cron fetches new Freelancer.com postings, filters them against a configurable keyword list, scores each 1–10 with `claude-haiku-4-5`, and posts the top matches to Slack — with a public dashboard for run history and scores. Zero infrastructure cost; the only spend is Anthropic API usage (well under $1/month at Haiku pricing).
