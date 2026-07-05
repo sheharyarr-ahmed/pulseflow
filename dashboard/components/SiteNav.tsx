@@ -7,14 +7,20 @@ import ThemeToggle from "./ThemeToggle";
 async function lastHeartbeat(): Promise<string | null> {
   const supabase = getClient();
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("workflow_runs")
-    .select("started_at")
-    .order("started_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error || !data) return null;
-  return data.started_at as string;
+  // try/catch, not just the error object: this runs in the root layout, where
+  // a thrown fetch error has no boundary — the shell must always render.
+  try {
+    const { data, error } = await supabase
+      .from("workflow_runs")
+      .select("started_at")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.started_at as string;
+  } catch {
+    return null;
+  }
 }
 
 function StatusDot({ startedAt }: { startedAt: string | null }) {
