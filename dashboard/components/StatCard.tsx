@@ -1,5 +1,11 @@
 import Reveal from "./Reveal";
 
+const TONES = {
+  default: "",
+  pulse: "text-pulse-text",
+  alert: "text-red-600 dark:text-red-400",
+};
+
 export default function StatCard({
   label,
   value,
@@ -8,7 +14,7 @@ export default function StatCard({
 }: {
   label: string;
   value: string;
-  tone?: "default" | "pulse";
+  tone?: keyof typeof TONES;
   delay?: number;
 }) {
   return (
@@ -17,9 +23,7 @@ export default function StatCard({
       className="rounded-xl border border-edge bg-surface p-6 transition-colors hover:border-pulse/40"
     >
       <p
-        className={`font-mono text-4xl tabular-nums tracking-tight ${
-          tone === "pulse" ? "text-pulse-text" : ""
-        }`}
+        className={`font-mono text-4xl tabular-nums tracking-tight ${TONES[tone]}`}
       >
         {value}
       </p>

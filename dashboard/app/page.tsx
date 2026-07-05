@@ -115,7 +115,7 @@ export default async function Home() {
       {/* Vitals */}
       <section className="mx-auto max-w-6xl px-6 pb-14 md:px-10 md:pb-20">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label={`Runs · last ${runs.length}`} value={String(runs.length)} />
+          <StatCard label="Runs tracked" value={String(runs.length)} />
           <StatCard
             label="Jobs notified"
             value={String(funnel[4].value)}
@@ -123,7 +123,12 @@ export default async function Home() {
             delay={75}
           />
           <StatCard label="Avg run duration" value={avgDuration} delay={150} />
-          <StatCard label="Error runs" value={String(errorRuns)} delay={225} />
+          <StatCard
+            label="Error runs"
+            value={String(errorRuns)}
+            tone={errorRuns > 0 ? "alert" : "default"}
+            delay={225}
+          />
         </div>
       </section>
 
@@ -162,7 +167,12 @@ export default async function Home() {
                   }`}
                   style={
                     {
-                      width: `${(f.value / max) * 100}%`,
+                      // max() keeps small non-zero stages (e.g. 1 of 431
+                      // notified) visible as a nub instead of a 2px sliver
+                      width:
+                        f.value > 0
+                          ? `max(${(f.value / max) * 100}%, 0.75rem)`
+                          : "0",
                       "--fill-delay": `${i * 100}ms`,
                     } as React.CSSProperties
                   }

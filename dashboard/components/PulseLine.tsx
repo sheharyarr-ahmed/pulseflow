@@ -6,9 +6,9 @@
 type PulseLineState = "live" | "flat" | "warn";
 
 const PATHS: Record<PulseLineState, string> = {
-  live: "M0 32 H440 L466 6 L494 58 L512 32 H744",
-  flat: "M0 32 H500 L512 24 L524 32 H744",
-  warn: "M0 32 H744",
+  live: "M0 32 H440 L466 6 L494 58 L512 32 H756",
+  flat: "M0 32 H500 L512 24 L524 32 H756",
+  warn: "M0 32 H756",
 };
 
 const STROKE: Record<PulseLineState, string> = {
@@ -39,7 +39,6 @@ export default function PulseLine({
     >
       <path
         d={PATHS[state]}
-        pathLength={1}
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
