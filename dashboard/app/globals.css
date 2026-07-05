@@ -53,6 +53,21 @@ body {
   outline-offset: 2px;
 }
 
+/* The breathing heartbeat dot — nav status, newest run row. */
+.dot-live {
+  animation: dot-breathe 2.4s ease-out infinite;
+}
+
+@keyframes dot-breathe {
+  0% {
+    box-shadow: 0 0 0 0 rgb(16 185 129 / 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px rgb(16 185 129 / 0);
+  }
+}
+
 /* Ambient emerald glow — hero and footer only, never behind data. */
 .hero-glow {
   background: radial-gradient(
