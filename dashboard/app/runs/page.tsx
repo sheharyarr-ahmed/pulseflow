@@ -28,6 +28,7 @@ export default async function RunsPage() {
   if (!supabase) return <Unreachable />;
 
   // Last 90 days, explicit order + limit (supabase-js truncates at 1000).
+  // eslint-disable-next-line react-hooks/purity -- server component under 5-min ISR: cutoff re-evaluates per revalidation by design
   const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("workflow_runs")

@@ -69,6 +69,7 @@ export default async function Home() {
 
   const latest = runs[0]?.started_at ?? null;
   const fresh =
+    // eslint-disable-next-line react-hooks/purity -- server component under 5-min ISR: freshness re-evaluates per revalidation by design
     latest !== null && Date.now() - Date.parse(latest) < HEARTBEAT_FRESH_MS;
   const lineState = runs.length === 0 ? "flat" : fresh ? "live" : "warn";
 

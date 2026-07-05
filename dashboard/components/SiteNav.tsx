@@ -21,6 +21,7 @@ function StatusDot({ startedAt }: { startedAt: string | null }) {
   // Real status, not decoration: emerald + breathing while the daily run is
   // fresh, amber once it's overdue, zinc when the data source is unreachable.
   const fresh =
+    // eslint-disable-next-line react-hooks/purity -- server component under 5-min ISR: freshness re-evaluates per revalidation by design
     startedAt !== null && Date.now() - Date.parse(startedAt) < HEARTBEAT_FRESH_MS;
   const dot = !startedAt
     ? "bg-zinc-400 dark:bg-zinc-600"
